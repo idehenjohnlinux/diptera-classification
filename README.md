@@ -41,11 +41,10 @@ The main objectives of the project are:
 
 5. Develop an automated computational pipeline for metadata validation, image verification, preprocessing, dataset organization and model training.
 
-6. Evaluate model performance at the **family** and **genus** taxonomic levels using quantitative classification metrics.
+6. Evaluate model performance at the family and genus taxonomic levels using quantitative classification metrics.
 
 7. Apply hierarchical prediction so that genus-level predictions remain compatible with the predicted taxonomic family.
 
----
 
 ## Dataset
 
@@ -69,7 +68,7 @@ Taxonomic classification was investigated at two levels:
 
 Species-level classification was not used as the primary supervised classification target.
 
-> **Data availability:** Raw specimen photographs are not included directly in this repository. The repository contains the computational workflow required for processing and analysing the dataset.
+> Data availability: Raw specimen photographs are not included directly in this repository. The repository contains the computational workflow required for processing and analysing the dataset.
 
 
 
@@ -77,15 +76,15 @@ Species-level classification was not used as the primary supervised classificati
 
 Three convolutional neural network architectures were evaluated:
 
-- **EfficientNet-B0**
-- **ResNet18**
-- **MobileNetV3 Large**
+- EfficientNet-B0
+- ResNet18
+- MobileNetV3 Large
 
 The models were trained using transfer learning and evaluated across the four anatomical views.
 
-Five-fold cross-validation was used to evaluate model performance.
+Five(5)-fold cross-validation was used to evaluate model performance.
 
----
+
 
 ## Evaluation Metrics
 
@@ -100,13 +99,12 @@ Model performance was evaluated using several classification metrics, including:
 
 Confusion matrices and per-class metrics were also generated to analyse classification performance at family and genus levels.
 
----
 
 ## Hierarchical Identification
 
 In addition to the independent CNN experiments, the project includes a hierarchical identification stage.
 
-The hierarchical approach predicts the specimen's **family** and subsequently determines a compatible **genus**, preserving the biological relationship:
+The hierarchical approach predicts the specimen's family and subsequently determines a compatible genus, preserving the biological relationship:
 
 ```text
 Specimen
@@ -118,18 +116,18 @@ Compatible Genus
 
 This approach prevents taxonomically incompatible family–genus combinations and provides a structured method for assisting the identification of specimens.
 
----
+
 
 ## Computational Workflow
 
-The complete analysis is automated using **Snakemake**.
+The complete analysis is automated using Snakemake.
 
 The main workflow follows:
 
 ```text
 Dataset Audit
       ↓
-Image Validation
+ Validation
       ↓
 Preprocessing
       ↓
@@ -150,7 +148,7 @@ Visualisation
 
 Snakemake tracks dependencies between the different stages and executes only the steps that need to be generated or updated.
 
----
+
 
 ## Repository Structure
 
@@ -190,7 +188,7 @@ snakemake_mosca/
     └── production/
 ```
 
----
+
 
 ## Reproducibility
 
@@ -199,9 +197,8 @@ The workflow uses Snakemake together with Conda environments to manage software 
 The plotting environments are defined in:
 
 ```text
-workflow/envs/python_plot.yml
-workflow/envs/r_plot.yml
-```
+workflow/envs
+workflow/envs
 
 To execute the workflow:
 
@@ -269,4 +266,4 @@ Internship carried out at:
 
 ## License
 
-License information will be added before public release.
+For academic and educational use.

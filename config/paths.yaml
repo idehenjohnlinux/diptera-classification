@@ -1,0 +1,37 @@
+metadata:
+  excel: "metadata/BaseDadosCol-2026.xlsx"
+
+  audit_report: "metadata/specimen_image_check.csv"
+  validation_report: "metadata/image_validation_report.csv"
+
+  processed_dataset: "metadata/processed_dataset.csv"
+  preprocessing_report: "metadata/preprocessing_summary.csv"
+  preprocessing_summary: "metadata/preprocessing_summary.json"
+
+  splits_root: "metadata/splits"
+
+images:
+  root: "images"
+
+processed:
+  root: "processed/images"
+
+results:
+  root: "results"
+
+  models: "results/models"
+  metrics: "results/metrics"
+  predictions: "results/predictions"
+  plots: "results/plots"
+  comparison: "results/comparison"
+
+reports:
+  root: "reports"
+  logs: "reports/logs"
+
+workflow:
+  environments: "workflow/envs"
+  rules: "workflow/rules"
+
+tests:
+  root: "tests"

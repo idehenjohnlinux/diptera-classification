@@ -1,0 +1,22 @@
+version: 1
+
+formatters:
+  standard:
+    format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: standard
+    stream: ext://sys.stdout
+
+  file:
+    class: logging.FileHandler
+    level: INFO
+    formatter: standard
+    filename: reports/logs/pipeline.log
+
+root:
+  level: INFO
+  handlers: [console, file]

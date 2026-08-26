@@ -1,0 +1,20 @@
+architectures:
+  - resnet18
+  - efficientnet_b0
+  - mobilenet_v3_large
+
+image_size: 224
+
+pretrained: true
+
+batch_size: 16
+
+num_workers: 4
+
+learning_rate: 0.0001
+
+epochs: 30
+
+optimizer: adam
+
+weight_decay: 0.0001

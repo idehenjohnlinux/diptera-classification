@@ -1,0 +1,108 @@
+# ============================================================
+# Brachycera CNN Project - Git Ignore
+# ============================================================
+
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# -------------------------
+# Virtual / Conda environments
+# -------------------------
+.venv/
+venv/
+env/
+.env/
+conda-env/
+*.egg-info/
+
+# -------------------------
+# Snakemake temporary files
+# -------------------------
+.snakemake/
+
+# -------------------------
+# IDE / Editor files
+# -------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# -------------------------
+# Operating system files
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Logs
+# -------------------------
+*.log
+logs/
+reports/logs/
+
+# -------------------------
+# Raw specimen images
+# Do not publish IHMT collection photographs
+# -------------------------
+images/
+data/raw/
+raw_images/
+
+# -------------------------
+# Trained neural-network models
+# Large binary files
+# -------------------------
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# -------------------------
+# Temporary files
+# -------------------------
+tmp/
+temp/
+*.tmp
+
+# -------------------------
+# Jupyter
+# -------------------------
+.ipynb_checkpoints/
+
+# -------------------------
+# R
+# -------------------------
+.Rhistory
+.RData
+.Ruserdata
+
+# -------------------------
+# Archive files
+# -------------------------
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# -------------------------
+# Processed datasets
+# -------------------------
+processed/
+
+# -------------------------
+# Large model/training outputs
+# -------------------------
+results/training/
+results/production/
+
+# R temporary output
+Rplots.pdf

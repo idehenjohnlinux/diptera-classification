@@ -1,0 +1,88 @@
+project:
+  name: brachycera-cnn
+  random_seed: 42
+
+dataset:
+  specimen_id_column: numCol
+
+  taxonomic_columns:
+    family: family
+    genus: genus
+
+  view_column: view_code
+
+  path_column: processed_image_path
+
+  expected_views:
+    - FDT
+    - FFF
+    - FLP
+    - FLT
+
+  missing_label_values:
+    - ""
+    - unknown
+    - unlabelled
+    - unidentified
+    - nan
+    - none
+
+preprocessing:
+  image_size: 224
+  output_format: jpg
+  jpeg_quality: 95
+  preserve_aspect_ratio: true
+  apply_padding: true
+  padding_value: 255
+  
+accepted_modes:
+    - RGB
+    - RGBA
+    - L
+    - CMYK
+
+training:
+  classification_levels:
+    - family
+    - genus
+
+  views:
+    - FDT
+    - FFF
+    - FLP
+    - FLT
+
+  architectures:
+    - resnet18
+    - efficientnet_b0
+    - mobilenet_v3_large
+
+  pretrained: true
+  batch_size: 32
+  epochs: 20
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  num_workers: 4
+  early_stopping_patience: 3
+
+cross_validation:
+  method: stratified_group_kfold
+  n_splits: 5
+  shuffle: true
+  random_seed: 42
+  group_column: numCol
+  minimum_specimens_per_class: 5
+
+evaluation:
+  metrics:
+    - accuracy
+    - balanced_accuracy
+    - macro_precision
+    - macro_recall
+    - macro_f1
+    - weighted_f1
+
+  save_predictions: true
+  save_confusion_matrix: true
+  save_classification_report: true
+  save_training_curves: true

@@ -1,0 +1,11 @@
+name: brachycera-r-plot
+
+channels:
+  - conda-forge
+
+dependencies:
+  - r-base
+  - r-ggplot2
+  - r-readr
+  - r-dplyr
+  - r-tidyr

@@ -1,0 +1,11 @@
+name: brachycera-python-plot
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.12
+  - pandas
+  - numpy
+  - matplotlib
+  - pillow

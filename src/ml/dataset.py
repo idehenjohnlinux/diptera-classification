@@ -4,35 +4,9 @@ This module reads the cross-validation CSV files produced by:
 
     src/core/cross_validation.py
 
-It supports:
-
-- family classification;
-- genus classification;
-- FDT, FFF, FLP and FLT anatomical views;
-- specimen-level cross-validation folds;
-- separate training and validation subsets;
-- optional image transformations;
-- class-to-index mappings;
-- strict path and label validation.
-
-Expected input files
---------------------
-metadata/cross_validation/family_folds.csv
-metadata/cross_validation/genus_folds.csv
-
-Typical use
------------
-from src.ml.dataset import create_datasets
-
-train_dataset, validation_dataset, class_to_idx = create_datasets(
-    level="family",
-    view_code="FDT",
-    validation_fold=1,
-    train_transform=train_transform,
-    validation_transform=validation_transform,
 )
 """
-
+# import module
 from __future__ import annotations
 
 import json
@@ -50,9 +24,14 @@ from torch.utils.data import Dataset
 # TYPES
 # ============================================================
 
+
+# Restrict supported taxonomic levels to Family and Genus.
 TaxonomicLevel = Literal["family", "genus"]
+
+# Define the two subsets used during cross-validation.
 DatasetSubset = Literal["train", "validation"]
 
+# Anatomical views available in the image dataset.
 VALID_LEVELS = {"family", "genus"}
 VALID_SUBSETS = {"train", "validation"}
 VALID_VIEWS = {"FDT", "FFF", "FLP", "FLT"}
@@ -62,8 +41,11 @@ VALID_VIEWS = {"FDT", "FFF", "FLP", "FLT"}
 # PROJECT PATHS
 # ============================================================
 
+# Resolving the project root automatically so that the module
+# can be executed independently of the current working directory.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+# Cross-validation fold assignments generated previously.
 CROSS_VALIDATION_ROOT = (
     PROJECT_ROOT / "metadata" / "cross_validation"
 )
@@ -550,11 +532,13 @@ def filter_fold_dataframe(
             f"view {normalized_view}. "
             f"Available views: {available_views}"
         )
-
+    # Select training specimens from all folds except the fold
+    # currently reserved for validation.
     if normalized_subset == "train":
         subset_data = view_data.loc[
             view_data["fold"] != validation_fold
         ].copy()
+    # The selected fold is used exclusively for validation.
     else:
         subset_data = view_data.loc[
             view_data["fold"] == validation_fold
@@ -648,7 +632,12 @@ def create_datasets(
         validation_fold=validation_fold,
         subset="validation",
     )
+# ============================================================
+# DATA LEAKAGE CHECK
+# ============================================================
 
+# All images belonging to the same specimen must remain
+# exclusively in either training or validation.
     train_specimens = set(
         train_data["numCol"].astype(str)
     )
@@ -679,7 +668,8 @@ def create_datasets(
         .astype(str)
         .str.strip()
     )
-
+    # Ensure that every taxonomic class present in validation
+    # is represented by at least one training example.
     validation_only_labels = (
         validation_labels - training_labels
     )

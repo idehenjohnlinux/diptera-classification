@@ -1,11 +1,7 @@
 """
 Image transformations for the Brachycera classification pipeline.
 
-This module provides separate transformation pipelines for:
 
-- training
-- validation
-- prediction
 
 Training transformations include conservative augmentation.
 Validation and prediction transformations are deterministic.
@@ -17,11 +13,12 @@ from typing import Tuple
 
 from torchvision import transforms
 
-
+# All images are resized to 224 × 224 pixels so that they have
 DEFAULT_IMAGE_SIZE: Tuple[int, int] = (224, 224)
 
-# ImageNet normalization values.
-# These are appropriate for pretrained torchvision models.
+# Mean and standard deviation used to normalize RGB channels.
+# These values correspond to the standard normalization used
+# by pretrained torchvision models and help keep input values
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STD = (0.229, 0.224, 0.225)
 
@@ -32,18 +29,7 @@ def get_training_transforms(
     """
     Return transformations used during model training.
 
-    Conservative augmentation is used because strong transformations
-    could distort important morphological characteristics.
-
-    Parameters
-    ----------
-    image_size:
-        Final image size as ``(height, width)``.
-
-    Returns
-    -------
-    torchvision.transforms.Compose
-        Training transformation pipeline.
+    
     """
 
     return transforms.Compose(
@@ -100,15 +86,7 @@ def get_validation_transforms(
     No random augmentation is applied because validation results must
     remain reproducible.
 
-    Parameters
-    ----------
-    image_size:
-        Final image size as ``(height, width)``.
-
-    Returns
-    -------
-    torchvision.transforms.Compose
-        Validation transformation pipeline.
+  
     """
 
     return transforms.Compose(
@@ -132,15 +110,6 @@ def get_prediction_transforms(
     Prediction transformations are identical to validation
     transformations.
 
-    Parameters
-    ----------
-    image_size:
-        Final image size as ``(height, width)``.
-
-    Returns
-    -------
-    torchvision.transforms.Compose
-        Prediction transformation pipeline.
     """
 
     return get_validation_transforms(image_size=image_size)
@@ -152,17 +121,10 @@ def denormalize_tensor(tensor):
 
     This function is useful for visualising transformed images.
 
-    Parameters
-    ----------
-    tensor:
-        Normalized PyTorch image tensor with shape ``[C, H, W]``.
-
-    Returns
-    -------
-    torch.Tensor
-        Denormalized tensor with values limited to the range [0, 1].
+    
+    
     """
-
+   
     mean = tensor.new_tensor(IMAGENET_MEAN).view(3, 1, 1)
     std = tensor.new_tensor(IMAGENET_STD).view(3, 1, 1)
 

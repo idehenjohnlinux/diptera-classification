@@ -1,15 +1,8 @@
 """
 CNN model factory for Brachycera image classification.
 
-Supported architectures:
-- ResNet18
-- EfficientNet-B0
-- MobileNetV3-Large
-
-The final classification layer is replaced according to the number
-of classes in the current family or genus experiment.
 """
-
+# import modules
 from __future__ import annotations
 
 import argparse
@@ -19,7 +12,7 @@ import torch
 from torch import nn
 from torchvision import models
 
-
+# CNN architectures evaluated in this project.
 SUPPORTED_ARCHITECTURES: Final[tuple[str, ...]] = (
     "resnet18",
     "efficientnet_b0",
@@ -30,11 +23,8 @@ SUPPORTED_ARCHITECTURES: Final[tuple[str, ...]] = (
 def normalize_architecture_name(architecture: str) -> str:
     """
     Normalize common architecture-name variations.
+    This allows users to provide names like the architectures
 
-    Examples
-    --------
-    efficientnet-b0 -> efficientnet_b0
-    mobilenetv3large -> mobilenet_v3_large
     """
 
     normalized = architecture.strip().lower().replace("-", "_")
@@ -64,9 +54,10 @@ def create_resnet18(
     )
 
     model = models.resnet18(weights=weights)
-
+    # Number of features produced by the original ResNet18 backbone.
     input_features = model.fc.in_features
-
+    # Replace the original ImageNet classification layer.
+    # The new layer predicts the family or genus classes
     model.fc = nn.Linear(
         in_features=input_features,
         out_features=num_classes,
@@ -90,7 +81,8 @@ def create_efficientnet_b0(
     )
 
     model = models.efficientnet_b0(weights=weights)
-
+    # EfficientNet-B0 stores its final linear classifier
+    # at position 1 of model.classifier.
     input_features = model.classifier[1].in_features
 
     model.classifier[1] = nn.Linear(
@@ -116,9 +108,10 @@ def create_mobilenet_v3_large(
     )
 
     model = models.mobilenet_v3_large(weights=weights)
-
+    # The final linear layer of MobileNetV3 Large is stored
+    # at position 3 of the classifier sequence.
     input_features = model.classifier[3].in_features
-
+    # Adapt the output layer to the number of taxonomic classes.
     model.classifier[3] = nn.Linear(
         in_features=input_features,
         out_features=num_classes,
@@ -133,7 +126,7 @@ def freeze_feature_extractor(model: nn.Module) -> None:
 
     This can be useful during the first stage of transfer learning.
     """
-
+    # Freeze every parameter in the pretrained network.
     for parameter in model.parameters():
         parameter.requires_grad = False
     if isinstance(model, models.ResNet):
@@ -190,26 +183,13 @@ def create_model(
 ) -> nn.Module:
     """
     Create one of the supported CNN architectures.
-
-    Parameters
-    ----------
-    architecture:
+    
         Model architecture name.
-
-    num_classes:
         Number of output classes.
-
-    pretrained:
         Whether to use ImageNet pretrained weights.
-
-    freeze_backbone:
         Whether to freeze the feature extractor and train only the
         classification head initially.
 
-    Returns
-    -------
-    torch.nn.Module
-        Configured CNN model.
     """
 
     if num_classes < 2:

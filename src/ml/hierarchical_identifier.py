@@ -27,9 +27,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATASET_PATH = (
     PROJECT_ROOT
     / "metadata"
-    / "identification"
-    / "identification_dataset.csv"
+    / "master_dataset.csv"
 )
+
 
 DEFAULT_CHECKPOINT_PATH = (
     PROJECT_ROOT
@@ -1914,7 +1914,7 @@ def parse_arguments() -> argparse.Namespace:
         "--dataset",
         type=Path,
         default=DEFAULT_DATASET_PATH,
-        help="Path to identification_dataset.csv.",
+        help="Path to master_dataset.csv.",
     )
 
     parser.add_argument(

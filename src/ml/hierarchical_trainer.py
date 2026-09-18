@@ -1,8 +1,8 @@
 
-
 # import modules
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import logging
@@ -21,7 +21,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
 from src.ml.hierarchical_dataset import (
-    DEFAULT_IDENTIFICATION_DATASET,
+    DEFAULT_DATASET_PATH,
     HierarchicalBrachyceraDataset,
     build_class_mapping,
     build_family_to_genera_mapping,
@@ -52,12 +52,11 @@ DEFAULT_OUTPUT_DIRECTORY = (
 # ============================================================
 # CONFIGURATION
 # ============================================================
-# creates class configuration 
 @dataclass
 class HierarchicalTrainingConfiguration:
     """Configuration for hierarchical model training."""
 
-    input_csv: str = str(DEFAULT_IDENTIFICATION_DATASET)
+    input_csv: str = str(DEFAULT_DATASET_PATH)
     output_directory: str = str(DEFAULT_OUTPUT_DIRECTORY)
 
     architecture: str = "efficientnet_b0"
@@ -98,7 +97,6 @@ class HierarchicalTrainingConfiguration:
 # REPRODUCIBILITY AND DEVICE
 # ============================================================
 
-# ensure that the trainer is reproducible 
 def set_random_seed(seed: int) -> None:
     """Set random seeds for reproducible execution."""
 
@@ -133,16 +131,16 @@ def select_device() -> torch.device:
 # DATA SPLITTING
 # ============================================================
 
-# splits datasets 
 def stratified_family_split(
     dataframe: pd.DataFrame,
     validation_fraction: float,
     seed: int,
+    specimen_column: str = "numCol",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Split specimens while preserving family representation.
+    """Split specimens while preserving family representation and preventing leakage.
 
+    Splits at the unique specimen level (`numCol` or `specimen_id`).
     Every family keeps at least one specimen in the training set.
-    Families represented by only one specimen remain in training.
     """
 
     if not 0.0 < validation_fraction < 1.0:
@@ -150,30 +148,36 @@ def stratified_family_split(
             "validation_fraction must be between 0 and 1."
         )
 
+    # Fallback column handling if numCol is absent
+    col = specimen_column if specimen_column in dataframe.columns else "specimen_id"
+    if col not in dataframe.columns:
+        col = "image_path"
+
     random_generator = np.random.default_rng(seed)
 
-    train_indices: list[int] = []
-    validation_indices: list[int] = []
+    # Aggregate by unique specimen to retrieve assigned family
+    specimen_families = (
+        dataframe.groupby(col)["family"]
+        .first()
+        .reset_index()
+    )
 
-    for _, family_group in dataframe.groupby(
-        "family",
-        sort=True,
-    ):
-        indices = family_group.index.to_numpy().copy()
-        random_generator.shuffle(indices)
+    train_specimens: list[Any] = []
+    validation_specimens: list[Any] = []
 
-        number_of_specimens = len(indices)
+    for _, family_group in specimen_families.groupby("family", sort=True):
+        specimens = family_group[col].to_numpy().copy()
+        random_generator.shuffle(specimens)
+
+        number_of_specimens = len(specimens)
 
         if number_of_specimens == 1:
-            train_indices.extend(indices.tolist())
+            train_specimens.extend(specimens.tolist())
             continue
 
         number_for_validation = max(
             1,
-            int(round(
-                number_of_specimens
-                * validation_fraction
-            )),
+            int(round(number_of_specimens * validation_fraction)),
         )
 
         number_for_validation = min(
@@ -181,20 +185,19 @@ def stratified_family_split(
             number_of_specimens - 1,
         )
 
-        validation_indices.extend(
-            indices[:number_for_validation].tolist()
+        validation_specimens.extend(
+            specimens[:number_for_validation].tolist()
+        )
+        train_specimens.extend(
+            specimens[number_for_validation:].tolist()
         )
 
-        train_indices.extend(
-            indices[number_for_validation:].tolist()
-        )
-
-    train_dataframe = dataframe.loc[
-        sorted(train_indices)
+    train_dataframe = dataframe[
+        dataframe[col].isin(train_specimens)
     ].reset_index(drop=True)
 
-    validation_dataframe = dataframe.loc[
-        sorted(validation_indices)
+    validation_dataframe = dataframe[
+        dataframe[col].isin(validation_specimens)
     ].reset_index(drop=True)
 
     if train_dataframe.empty:
@@ -210,7 +213,6 @@ def stratified_family_split(
 # DATASETS AND LOADERS
 # ============================================================
 
-# loads the datasets for training 
 def create_training_components(
     configuration: HierarchicalTrainingConfiguration,
 ) -> tuple[
@@ -295,8 +297,6 @@ def create_training_components(
 
     pin_memory = torch.cuda.is_available()
 
-    # drop_last prevents BatchNorm1d from receiving a training
-    # batch containing only one specimen.
     training_loader = DataLoader(
         training_dataset,
         batch_size=configuration.batch_size,
@@ -330,7 +330,6 @@ def create_training_components(
 # METRICS
 # ============================================================
 
-# calculates the metrics 
 def calculate_batch_statistics(
     family_logits: Tensor,
     genus_logits: Tensor,
@@ -407,7 +406,6 @@ def safe_percentage(
 # EPOCH EXECUTION
 # ============================================================
 
-# executes each epoch for training 
 def run_epoch(
     model: nn.Module,
     data_loader: DataLoader,
@@ -604,7 +602,6 @@ def run_epoch(
 # SAVING
 # ============================================================
 
-#saves the files 
 def save_checkpoint(
     output_path: Path,
     model: nn.Module,
@@ -690,7 +687,6 @@ def save_history(
 # TRAINING
 # ============================================================
 
-# trains the model 
 def train_hierarchical_model(
     configuration: HierarchicalTrainingConfiguration,
 ) -> dict[str, Any]:
@@ -1015,6 +1011,70 @@ def train_hierarchical_model(
     return summary
 
 
+def parse_arguments() -> HierarchicalTrainingConfiguration:
+    """Parse CLI arguments and return a configuration instance."""
+    
+    parser = argparse.ArgumentParser(
+        description="Train hierarchical family/genus classification model."
+    )
+    
+    parser.add_argument("--input-csv", type=str, default=str(DEFAULT_DATASET_PATH), help="Path to input metadata CSV")
+    parser.add_argument("--output-directory", type=str, default=str(DEFAULT_OUTPUT_DIRECTORY), help="Directory to save models and logs")
+    parser.add_argument("--architecture", type=str, default="efficientnet_b0", help="Model backbone architecture")
+    parser.add_argument("--view-code", type=str, default="FLP", help="View code specifier")
+    parser.add_argument("--epochs", type=int, default=20, help="Number of training epochs")
+    parser.add_argument("--batch-size", type=int, default=16, help="Batch size")
+    parser.add_argument("--image-size", type=int, default=224, help="Input image dimension")
+    parser.add_argument("--num-workers", type=int, default=0, help="DataLoader workers")
+    parser.add_argument("--learning-rate", type=float, default=1e-4, help="Learning rate")
+    parser.add_argument("--weight-decay", type=float, default=1e-4, help="Weight decay")
+    parser.add_argument("--family-weight", type=float, default=1.0, help="Weight for family loss")
+    parser.add_argument("--genus-weight", type=float, default=0.5, help="Weight for genus loss")
+    parser.add_argument("--consistency-weight", type=float, default=0.2, help="Weight for hierarchy consistency loss")
+    parser.add_argument("--label-smoothing", type=float, default=0.0, help="Label smoothing factor")
+    parser.add_argument("--family-dropout", type=float, default=0.2, help="Family head dropout rate")
+    parser.add_argument("--genus-dropout", type=float, default=0.3, help="Genus head dropout rate")
+    parser.add_argument("--genus-hidden-dimension", type=int, default=512, help="Hidden dimensions for genus head")
+    parser.add_argument("--validation-fraction", type=float, default=0.20, help="Validation set split fraction")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--no-pretrained", dest="pretrained", action="store_false", help="Disable ImageNet pretrained weights")
+    parser.add_argument("--no-mixed-precision", dest="use_mixed_precision", action="store_false", help="Disable mixed precision training")
+    parser.add_argument("--early-stopping-patience", type=int, default=6, help="Patience for early stopping")
+    parser.add_argument("--scheduler-patience", type=int, default=2, help="Patience for LR scheduler")
+    parser.add_argument("--scheduler-factor", type=float, default=0.5, help="LR reduction factor")
+    parser.add_argument("--save-every-epoch", action="store_true", help="Save checkpoint after every epoch")
+
+    args = parser.parse_args()
+
+    return HierarchicalTrainingConfiguration(
+        input_csv=args.input_csv,
+        output_directory=args.output_directory,
+        architecture=args.architecture,
+        view_code=args.view_code,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        image_size=args.image_size,
+        num_workers=args.num_workers,
+        learning_rate=args.learning_rate,
+        weight_decay=args.weight_decay,
+        family_weight=args.family_weight,
+        genus_weight=args.genus_weight,
+        consistency_weight=args.consistency_weight,
+        label_smoothing=args.label_smoothing,
+        family_dropout=args.family_dropout,
+        genus_dropout=args.genus_dropout,
+        genus_hidden_dimension=args.genus_hidden_dimension,
+        validation_fraction=args.validation_fraction,
+        seed=args.seed,
+        pretrained=args.pretrained,
+        use_mixed_precision=args.use_mixed_precision,
+        early_stopping_patience=args.early_stopping_patience,
+        scheduler_patience=args.scheduler_patience,
+        scheduler_factor=args.scheduler_factor,
+        save_every_epoch=args.save_every_epoch,
+    )
+
+
 def main() -> None:
     """Command-line entry point."""
 
@@ -1025,9 +1085,7 @@ def main() -> None:
         ),
     )
 
-    configuration = (
-        HierarchicalTrainingConfiguration()
-    )
+    configuration = parse_arguments()
 
     train_hierarchical_model(configuration)
 

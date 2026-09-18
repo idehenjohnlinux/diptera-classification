@@ -21,11 +21,10 @@ from torch.utils.data import Dataset
 # creates the project path for hierarchical classification
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-DEFAULT_IDENTIFICATION_DATASET = (
+DEFAULT_DATASET_PATH = (
     PROJECT_ROOT
     / "metadata"
-    / "identification"
-    / "identification_dataset.csv"
+    / "master_dataset.csv"
 )
 
 DEFAULT_MAPPING_DIRECTORY = (
@@ -271,7 +270,7 @@ def save_hierarchical_mappings(
 # ============================================================
 # loads datasets for hierarchical classification
 def load_hierarchical_training_dataframe(
-    input_path: Path = DEFAULT_IDENTIFICATION_DATASET,
+    input_path: Path = DEFAULT_DATASET_PATH,
 ) -> pd.DataFrame:
     """Load specimens eligible for hierarchical training.
 
@@ -279,7 +278,7 @@ def load_hierarchical_training_dataframe(
 
     - an existing processed FLP image;
     - a valid family label;
-    - ``eligible_family_training`` set to True.
+    - ``use_for_family`` set to True.
 
     A valid genus is optional. Specimens without genus labels still
     contribute to family training.
@@ -298,8 +297,8 @@ def load_hierarchical_training_dataframe(
         "genus",
         "view_code",
         "processed_image_path",
-        "eligible_family_training",
-        "eligible_genus_training",
+        "use_for_family",
+        "use_for_genus",
     }
 
     missing_columns = (
@@ -320,12 +319,12 @@ def load_hierarchical_training_dataframe(
         "genus"
     ].apply(clean_taxonomic_value)
 
-    dataframe["eligible_family_training"] = dataframe[
-        "eligible_family_training"
+    dataframe["use_for_family"] = dataframe[
+        "use_for_family"
     ].apply(normalize_boolean)
 
-    dataframe["eligible_genus_training"] = dataframe[
-        "eligible_genus_training"
+    dataframe["use_for_genus"] = dataframe[
+        "use_for_genus"
     ].apply(normalize_boolean)
 
     dataframe["view_code"] = (
@@ -336,7 +335,7 @@ def load_hierarchical_training_dataframe(
     )
 
     training = dataframe[
-        dataframe["eligible_family_training"]
+        dataframe["use_for_family"]
         & dataframe["family"].notna()
         & (dataframe["view_code"] == "FLP")
     ].copy()
@@ -347,7 +346,7 @@ def load_hierarchical_training_dataframe(
         )
 
     training["has_genus_label"] = (
-        training["eligible_genus_training"]
+        training["use_for_genus"]
         & training["genus"].notna()
     )
 
@@ -508,7 +507,7 @@ class HierarchicalBrachyceraDataset(Dataset):
 
 def create_hierarchical_dataset(
     transform: Callable[[Image.Image], Tensor],
-    input_path: Path = DEFAULT_IDENTIFICATION_DATASET,
+    input_path: Path = DEFAULT_DATASET_PATH,
     save_mapping: bool = True,
     return_metadata: bool = True,
 ) -> tuple[

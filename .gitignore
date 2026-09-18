@@ -106,3 +106,7 @@ results/production/
 
 # R temporary output
 Rplots.pdf
+data/
+metadata/
+results/
+reports/

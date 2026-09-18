@@ -1,0 +1,36 @@
+name: brachycera-cnn
+
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  # Scientific & Data Processing
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - openpyxl
+
+  # Utilities & Visualization
+  - pyyaml
+  - matplotlib
+  - seaborn
+  - tqdm
+  - rich
+  - pytest
+  - networkx
+  - jupyter
+
+  # Workflow
+  - snakemake
+
+  # Pip dependencies for ARM architecture (CPU-only PyTorch)
+  - pip
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cpu
+      - torch
+      - torchvision
+      - opencv-python
+      - pillow

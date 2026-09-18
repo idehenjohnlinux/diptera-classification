@@ -529,95 +529,22 @@ class HierarchicalEvaluator:
         )
 
     @staticmethod
+    @staticmethod
     def _plot_confusion_matrix(
         confusion: pd.DataFrame,
         title: str,
         output_path: Path,
     ) -> None:
-        """Save one confusion matrix figure."""
+        """Skip confusion matrix plot generation."""
+        return
 
-        if confusion.empty:
-            return
-
-        matrix = confusion.to_numpy()
-
-        figure_size = max(8, min(20, len(confusion) * 0.55))
-        plt.figure(figsize=(figure_size, figure_size))
-        plt.imshow(matrix, interpolation="nearest", aspect="auto")
-        plt.title(title)
-        plt.xlabel("Predicted label")
-        plt.ylabel("True label")
-        plt.xticks(
-            np.arange(len(confusion.columns)),
-            [column.replace("pred:", "") for column in confusion.columns],
-            rotation=90,
-        )
-        plt.yticks(
-            np.arange(len(confusion.index)),
-            [index.replace("true:", "") for index in confusion.index],
-        )
-        plt.colorbar()
-        plt.tight_layout()
-        plt.savefig(output_path, dpi=300, bbox_inches="tight")
-        plt.close()
-
+    @staticmethod
     def _plot_confidence_histogram(
-        self,
-        level: str,
+        rank: str,
         output_path: Path,
     ) -> None:
-        """Plot confidence distributions for correct and incorrect rows."""
-
-        confidence_column = f"{level}_confidence"
-        correct_column = f"{level}_correct"
-        metadata_column = f"metadata_{level}"
-
-        subset = self.dataframe[
-            self.dataframe[metadata_column].notna()
-            & self.dataframe[confidence_column].notna()
-        ].copy()
-
-        if subset.empty:
-            return
-
-        correct_values = subset.loc[
-            subset[correct_column],
-            confidence_column,
-        ]
-
-        incorrect_values = subset.loc[
-            ~subset[correct_column],
-            confidence_column,
-        ]
-
-        plt.figure(figsize=(9, 6))
-
-        bins = np.linspace(0, 1, 21)
-
-        if not correct_values.empty:
-            plt.hist(
-                correct_values,
-                bins=bins,
-                alpha=0.6,
-                label="Agreement",
-            )
-
-        if not incorrect_values.empty:
-            plt.hist(
-                incorrect_values,
-                bins=bins,
-                alpha=0.6,
-                label="Disagreement",
-            )
-
-        plt.title(f"{level.title()} confidence distribution")
-        plt.xlabel("Model confidence")
-        plt.ylabel("Number of specimens")
-        plt.xlim(0, 1)
-        plt.legend()
-        plt.tight_layout()
-        plt.savefig(output_path, dpi=300, bbox_inches="tight")
-        plt.close()
+        """Skip plot generation."""
+        return
 
     def _plot_class_support(
         self,
@@ -625,31 +552,9 @@ class HierarchicalEvaluator:
         per_class: pd.DataFrame,
         output_path: Path,
     ) -> None:
-        """Plot per-class F1 score and sample support."""
+        """skip plot"""
+        return
 
-        if per_class.empty:
-            return
-
-        label_column = level
-        ordered = per_class.sort_values(
-            by="f1_score",
-            ascending=True,
-        )
-
-        plt.figure(
-            figsize=(10, max(6, len(ordered) * 0.35))
-        )
-        plt.barh(
-            ordered[label_column],
-            ordered["f1_score"],
-        )
-        plt.xlabel("F1 score")
-        plt.ylabel(level.title())
-        plt.xlim(0, 1)
-        plt.title(f"Per-{level} F1 score")
-        plt.tight_layout()
-        plt.savefig(output_path, dpi=300, bbox_inches="tight")
-        plt.close()
 
     def evaluate(self) -> dict[str, Any]:
         """Run the complete evaluation workflow."""

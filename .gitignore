@@ -1,0 +1,9 @@
+.snakemake/
+data/
+images/
+processed/
+results/
+reports/
+metadata/
+*.RData
+Rplots.pdf

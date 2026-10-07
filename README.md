@@ -146,7 +146,11 @@ Hierarchical Identification
       ↓
 Hierarchical Evaluation
       ↓
-Visualisation
+visualisation
+      ↓
+create family and genus summary
+    
+
 ```
 
 Snakemake tracks dependencies between the different stages and executes only the steps that need to be generated or updated.
@@ -179,8 +183,8 @@ snakemake_mosca/
 │
 ├── workflow/
 │   └── envs/
-│       ├── python_plot.yml
-│       └── r_plot.yml
+│       ├── envs.yml
+│       
 │
 ├── tests/
 │
@@ -200,8 +204,7 @@ The workflow uses Snakemake together with Conda environments to manage software 
 The plotting environments are defined in:
 
 ```text
-workflow/envs/python_plot.yml
-workflow/envs/r_plot.yml
+workflow/envs/envs.yml
 ```
 
 To execute the workflow:
